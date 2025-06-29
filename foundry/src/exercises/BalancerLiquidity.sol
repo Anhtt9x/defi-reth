@@ -93,6 +93,34 @@ contract BalancerLiquidity {
     ///      The user receives Balancer Pool Tokens (BPT) as a representation of their share in the pool.
     function join(uint256 rethAmount, uint256 wethAmount) external {
         // Write your code here
+        if (rethAmount > 0){
+            reth.transferFrom(msg.sender, address(this), rethAmount);
+            reth.approve(address(vault), rethAmount);
+        }
+
+        if (wethAmount > 0){
+            weth.transferFrom(msg.sender, address(this), wethAmount);
+            weth.approve(address(vault), wethAmount);
+        }
+
+        address[] memory assets = new address[](2);
+        assets[0] = address(reth);
+        assets[1] = address(weth);
+
+        uint256[] memory maxAmountsIn = new uint256[](2);
+        maxAmountsIn[0] = rethAmount;
+        maxAmountsIn[1] = wethAmount;
+
+        _join(msg.sender, assets, maxAmountsIn);
+        uint256 rethBal = reth.balanceOf(address(this));
+        if (rethBal > 0){
+            reth.transfer(msg.sender, rethBal);
+        }
+
+        uint256 wethBal = weth.balanceOf(address(this));
+        if (wethBal > 0){
+            weth.transfer(msg.sender, wethBal);
+        }
     }
 
     /// @notice Exit the Balancer liquidity pool and withdraw RETH and/or WETH
@@ -102,5 +130,17 @@ contract BalancerLiquidity {
     ///      It performs an exit from the pool and returns RETH and/or WETH.
     function exit(uint256 bptAmount, uint256 minRethAmountOut) external {
         // Write your code here
+        bpt.transferFrom(msg.sender, address(this), bptAmount);
+
+        address[] memory assests = new address[](2);
+        assests[0] = address(reth);
+        assests[1] = address(weth);
+
+        uint256[] memory minAmountsOut = new uint256[](2);
+        minAmountsOut[0] = minRethAmountOut;
+        minAmountsOut[1] = uint256(0);
+
+        _exit(bptAmount, recipient: msg.sender, assets, minAmountsOut);
+
     }
 }
